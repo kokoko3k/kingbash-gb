@@ -1,0 +1,242 @@
+' Gambas class file
+
+Public READLINE_LINE As String = ""
+Public READLINE_POINT As Integer = "0"
+Public CURRENT_DIR As String = ""
+
+Public Index As New Integer[]
+Public LASTPART As String = ""
+
+Public Sub Form_Open()
+  READLINE_LINE = Application.Args[1]
+  READLINE_POINT = "0" & Application.Args[2]
+  LASTPART = ParseLastPath(Left(READLINE_LINE, READLINE_POINT))
+  CURRENT_DIR = Application.dir
+  Me.Move(Mouse.screenx, Mouse.screeny)
+  FileList.SetFocus
+  'Populate listview
+  GetMatch(CURRENT_DIR, LASTPART)
+End
+
+Public Sub Form_Close()
+
+End
+
+Public Sub Form_KeyPress()
+  If Key.code = Key.esc Then
+    returncancel()
+  Endif
+End
+
+Public Sub FileList_KeyPress()
+  Dim currentfile As String
+  Try currentfile = FileList.Current.key
+  If Error Then currentfile = ""
+  Select Case Key.code
+    Case Key.Right
+      If (IsDir(Application.dir & "/" & currentfile) Or IsDir(currentfile)) Then
+        Index.Push(GetIndex(FileList))
+        GetDir(currentfile)
+      Endif
+    Case Key.left
+      Getdir(File.Dir(CURRENT_DIR))
+      Try PutIndex(FileList, Index.Pop())
+    Case Key.enter
+      returnok()
+    Case Key.Return
+      returnok()
+    End Select
+End
+
+Public Function GetIndex(list As Listview) As Integer
+  Dim i As Integer
+  list.MoveFirst()
+  For i = 1 To List.Count
+    If List.item.selected Then
+      Return i
+        Else
+      Try List.MoveBelow()
+    Endif
+  Next
+End
+
+Public Sub PutIndex(list As Listview, index As Integer)
+  Dim i As Integer
+  list.MoveFirst
+  Try list[List.Item.Key].selected = True
+  ' SLEEP 0.1
+   For i = 1 To Index - 1
+     list.movebelow
+   Next
+   Try list[List.Item.Key].selected = True
+End
+
+Public Function Lastdir(path As String) As String
+  Dim paths As String[] = Split(path, "/")
+  If Right(path) = "/" Then
+    Return paths[paths.Count - 2] & "/"
+      Else
+    Return paths[paths.Count - 1]
+  Endif
+End
+
+
+Public Sub GetMatch(path As String, pattern As String)
+  Dim myfile As String
+  Dim MatchList As String
+  Dim ExePaths As String[]
+  Dim ExePath As String
+
+  FileList.clear
+
+  If Right(path) <> "/" Then path = path & "/"
+  If IsDir(pattern) Then
+    If Right(pattern) <> "/" Then pattern = pattern & "/"
+  Endif
+  'SHELL "find " & path & pattern & "/* -maxdepth 1" TO MatchList
+  Shell "ls -da " & "\"" & pattern & "\"" & "*" To MatchList
+  For Each myfile In Split(MatchList, "\n", Null, True).Sort()
+    'IF IsDir(path & "/" & myfile) THEN 
+    If IsDir(myfile) Or IsDir(Application.dir & "/" & myfile) Then
+      FileList.Add(myFile & "/", Lastdir(myFile & "/"))
+        Else
+      FileList.Add(myfile, Lastdir(myfile))
+    Endif
+  Next
+
+
+  Exepaths = Split(Application.Env["PATH"], ":", Null, True)
+
+  If Not ((pattern Like "/*") Or (pattern Like "*/") Or (pattern Like "../*") Or (pattern Like "./*") Or (Trim(pattern) = "")) Then
+    'check for name matches in default paths too
+    For Each Exepath In Exepaths
+      Shell "find " & exepath & "/" & pattern & "* -maxdepth 1" To MatchList
+      For Each myfile In Split(Matchlist, "\n", Null, True)
+        Try FileList.Add(myfile, "[$PATH] - " & Lastdir(myfile))
+      Next 'myfile
+    Next 'exepath
+  Endif
+
+  CURRENT_DIR = File.Dir(pattern)
+  
+  If CURRENT_DIR <> "" Then CurrentDirBox.text = CURRENT_DIR & "/"
+  Try FileList[0].selected = True
+  If FileList.count = 0 Then
+    returncancel()
+    Else If FileList.count = 1 Then
+      returnok()
+  Endif
+  Try FileList.MoveFirst()
+  Try FileList.Current.Selected = True
+End
+
+Public Sub GetDir(path As String)
+  Dim files, myfile As String
+  FileList.clear
+  If Right(path) <> "/" Then path = path & "/"
+  Shell "find " & "\"" & path & "\"" & " -maxdepth 1" To files
+  For Each MyFile In Split(files, "\n", Null, True).Sort()
+  If IsDir(myfile) Or IsDir(Application.dir & "/" & myfile) Then
+    If myfile <> path Then FileList.Add(myFile & "/", Lastdir(myFile & "/"))
+      Else
+    FileList.Add(myfile, Lastdir(myfile))
+    Endif
+  Next
+  CURRENT_DIR = Replace(path, "//", "/")
+  If (Right(CURRENT_DIR) = "/") And (CURRENT_DIR <> "/") Then CURRENT_DIR = Left(CURRENT_DIR, Len(CURRENT_DIR) - 1)
+  CurrentDirBox.text = Replace(CURRENT_DIR, "//", "/")
+  Try FileList[0].selected = True
+End
+
+
+Public Sub OldGetDir(path As String, Optional pattern As String = "*")
+  Dim myfile As String
+  FileList.clear
+
+  For Each MyFile In Dir(path).Sort()
+  If IsDir(path & "/" & myfile) Then
+    If myfile Like pattern Then FileList.Add(myFile & "/", Lastdir(myFile & "/"))
+      Else
+    If myfile Like pattern Then FileList.Add(myFile, Lastdir(myfile))
+    Endif
+  Next
+  CURRENT_DIR = Replace(path, "//", "/")
+  If (Right(CURRENT_DIR) = "/") And (CURRENT_DIR <> "/") Then CURRENT_DIR = Left(CURRENT_DIR, Len(CURRENT_DIR) - 1)
+  CurrentDirBox.text = CURRENT_DIR & "/"
+  Try FileList[0].selected = True
+End
+
+
+Public Sub FileList_DblClick()
+  returnok()
+End
+
+Public Sub returnok()
+  Dim returnstring As String
+  Dim rleft As String
+  Dim rmid As String = ""
+  Dim rright As String
+  'left part
+  rLeft = Left(READLINE_LINE, READLINE_POINT - Len(LASTPART))
+  'middle part
+  ' [GB2:QUOT] Try rmid = Quote.Shell(FileList.current.key)
+  Try rmid = Shell$(FileList.current.key)
+  'IF ERROR THEN rmid = CURRENT_DIR & "/"
+  If IsDir(rmid) Then rmid = rmid & "/"
+  'right part
+  rmid = Replace(rmid, "//", "/")
+  Try rright = Mid(READLINE_LINE, READLINE_POINT + 1)
+
+  returnstring = Replace(rleft & rmid & rright, "//", "/")
+  Print returnstring              '$READLINE_LINE
+  Print Len(rleft) + Len(rmid)    '$READLINE_POINT
+  Me.close
+End
+
+Public Sub returncancel()
+  Print Application.Args[1]
+  Print Application.Args[2]
+  Me.close
+End
+
+Public Function ParseLastPath(path As String) As String
+  Dim vmode As Boolean = False 'modalità virgoletta
+  Dim bmode As Boolean = False 'modalità backslash
+  Dim i As Integer
+  Dim start As Integer = 1
+  Dim c As String
+  Dim out As String
+  For i = 1 To Len(path)
+      c = Mid(path, i, 1)             'current char
+      If c = "\"" Then                'If you find a double quote then
+                                      ' if you're not in vmode then enter vmode
+                                      ' if you're in vmode then exit from vmode
+        vmode = Not vmode
+      Endif
+      
+      If c = "\\" Then                  'if you find a \ then
+        If Not vmode Then bmode = True  ' if you're not in vmode then enter bmode
+      Endif
+      
+      'ELSE'
+      
+
+      If ((c = " ") Or (c = "=") Or (c = "|") Or (c = "&") Or (c = ";") Or (c = "&")) Then      'if you find a space (or something similar) then
+        If bmode Then
+          bmode = False               ' If you're in bmode, go on and exit bmode
+            Else If (Not vmode) Then
+              start = i               ' if you're not in vmode then
+            Endif                     ' discard all you readed before
+      Endif
+
+       If Not (c = "\"" Or c = "\\") Then bmode = False 'as soon as you find a char, go on and exit from bmode
+  Next 'i
+  out = Mid(path, start)
+  If Left(out, 1) = " " Then out = Mid(out, 2, Len(out) - 1)
+  out = Replace(out, "\\\"", Chr(127)) 'replace \" with chr(127)
+  out = Replace(out, "\\", "")  'remove all \
+  out = Replace(out, "\"", "")   ' remove all "
+  out = Replace(out, Chr(127), "\"") 'replace chr(127) back to double quotes
+  Return out
+End
+

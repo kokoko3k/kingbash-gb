@@ -1,0 +1,17 @@
+# Gambas Form File 3.0
+
+{ Form Form 
+  MoveScaled(0,0,34,43)
+  Icon = Picture["icon:/16/terminal"]
+  Stacking = Window.Above
+  SkipTaskbar = True
+  Arrangement = Arrange.Vertical
+  { CurrentDirBox TextBox 
+    MoveScaled(1,1,32,4)
+    ReadOnly = True
+  }
+  { FileList ListView 
+    MoveScaled(1,5,32,18)
+    Expand = True
+  }
+}
