@@ -1,12 +1,15 @@
 # Gambas Project File 3.0
-# Compiled with Gambas 2.99.1
+# Compiled with Gambas 3.8.1
 Title=kingbash
 Startup=FMain
 Version=0.0.87
 Component=gb.image
 Component=gb.qt4
 Component=gb.form
+Component=gb.desktop.x11
+Component=gb.desktop
 Component=gb.qt4.ext
 Arguments="/\n40"
 TabSize=2
-ExecPath=/usr/bin/kingbash.gambas
+Language=it
+Packager=1

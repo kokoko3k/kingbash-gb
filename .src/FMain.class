@@ -7,22 +7,132 @@ Public CURRENT_DIR As String = ""
 Public Index As New Integer[]
 Public LASTPART As String = ""
 
+
 Public Sub Form_Open()
-  READLINE_LINE = Application.Args[1]
-  READLINE_POINT = "0" & Application.Args[2]
+  Dim result As String
+  Dim h, w As Integer
+
+  READLINE_LINE = Application.Args[1]               'the current commandline string
+  READLINE_POINT = "0" & Application.Args[2]        'the cursor position
+
   LASTPART = ParseLastPath(Left(READLINE_LINE, READLINE_POINT))
   CURRENT_DIR = Application.dir
-  Me.Move(Mouse.screenx, Mouse.screeny)
+
+  SetFormPos()
+  Me.h = Me.Font.TextHeight("|") * 20 * 1.5 '20 rows
+  Me.w = Me.Font.TextWidth("_") * 60 '~ 60 columns
   FileList.SetFocus
+
   'Populate listview
   GetMatch(CURRENT_DIR, LASTPART)
+  'timerlateshow.trigger
 End
 
-Public Sub Form_Close()
+Public Sub SetFormPos()
+  'try to put the window in the upper left corner of his "parent"
+  Dim pWin As DesktopWindow
+  Try pWin = Desktop.Windows.FromHandle(Desktop.ActiveWindow)
+  'or put it under the mouse in case of error:
+  If Error Then 
+    Me.Move(Mouse.screenx, Mouse.screeny)
+      Else
+    Me.Move(pWin.x + (pWin.w Div 2), pWin.y)
+  Endif
+End
+
+Public Sub timerlateshow_Timer()
+  'Wait 
+  'Populate listview
+  'GetMatch(CURRENT_DIR, LASTPART)
+End
+
+Public Sub GetMatch(path As String, pattern As String)
+  Dim results As String[]
+  Dim result, cItem As String
+
+  FileList.clear
+  FileList.tag = ""
+  If pattern = "" Then pattern = "./" 'show current dir content if empty search is requested.
+
+  'populate the listview by calling addresults versus various type of results from compgen.
+  'order matters because some results may overlap, and we keep only one of them
+  Try addresults(filelist, pattern, "directory", Picture["icon:/small/directory"])
+
+  Try addresults(filelist, pattern, "file", Picture["icon:/small/file"])
+
+  Try addresults(filelist, pattern, "builtin", Picture["icon:/small/program"])
+
+  Try addresults(filelist, pattern, "alias", Picture["icon:/small/bookmark"])
+
+  Try addresults(filelist, pattern, "command", Picture["icon:/small/exec"])
+
+  Try addresults(filelist, pattern, "export", Picture["icon:/small/script"])
+
+  Try addresults(filelist, pattern, "variable", Picture["icon:/small/script"])
+
+  CURRENT_DIR = File.Dir(pattern)
+
+  If CURRENT_DIR <> "" Then CurrentDirBox.text = CURRENT_DIR & "/"
+  Try FileList[0].selected = True
+  If FileList.count = 0 Then
+    returncancel()
+    Else If FileList.count = 1 Then
+      returnok()
+  Endif
+  Try FileList.MoveFirst()
+  Try FileList.item.Selected = True
 
 End
+
+Public Sub addresults(filelist As Listview, pattern As String, command As String, icon As Picture)
+  Dim result As String
+  For Each result In complete(pattern, command)
+    Try filelist.Add(result, result, icon)
+  Next
+End
+
+
+Public Function complete(command As String, type As String) As String[]
+  Dim result As String
+  Dim results As New String[]
+  Dim last_command As String
+  Dim aSplit As String[]
+
+  'use compgen to split word via IFS split fields: "=" and " "
+  Shell "IFS=\"= \" compgen -W " & command & " | tail -n 1" To last_command
+
+
+  last_command = Trim(last_command) 'remove \n
+
+  'get completions from compgen:
+  Shell "compgen -A " & type & " " & last_command & " |sort -f " To result
+
+  'if no results, try with first uppercase letter
+  If Trim(result) = "" Then 
+    last_command = String.ucasefirst(Lower(last_command))
+    Shell "compgen -A " & type & " " & last_command & " |sort f " To result
+  Endif
+  
+  'if no results, try with all lowercase
+  If Trim(result) = "" Then 
+    last_command = Lower(last_command)
+    Shell "compgen -A " & type & " " & last_command & " |sort -f " To result
+  Endif
+  
+  'if no results, try with all uppercase
+  If Trim(result) = "" Then 
+    last_command = Upper(last_command)
+    Shell "compgen -A " & type & " " & last_command & " |sort -f " To result
+  Endif
+  
+  'return results as an array of strings
+  results = Split(result, "\n", "", True)
+  Return results
+End
+
 
 Public Sub Form_KeyPress()
+  If Key.text = "" Then FileList_KeyPress()
   If Key.code = Key.esc Then
     returncancel()
   Endif
@@ -32,20 +142,67 @@ Public Sub FileList_KeyPress()
   Dim currentfile As String
   Try currentfile = FileList.Current.key
   If Error Then currentfile = ""
+
   Select Case Key.code
     Case Key.Right
       If (IsDir(Application.dir & "/" & currentfile) Or IsDir(currentfile)) Then
+        'remember the last selected item(s) position to allow back navigation by pushing it into the index array
         Index.Push(GetIndex(FileList))
         GetDir(currentfile)
       Endif
     Case Key.left
+      Getdir(File.Dir(CURRENT_DIR))
+      'select the previously selected item from the index array
+      Try PutIndex(FileList, Index.Pop())
+    Case Key.BackSpace
+      'select the previously selected item from the index array
       Getdir(File.Dir(CURRENT_DIR))
       Try PutIndex(FileList, Index.Pop())
     Case Key.enter
       returnok()
     Case Key.Return
       returnok()
+    Case Else
+      If Key.text <> "" Then 
+        'select files as user type letters
+        If Not SelectFileviewFromKey(Key.text) Then
+          'if nothing was found start to search over again:
+          SelectFileviewFromKey(Key.text)
+        Endif
+      Endif
     End Select
+End
+
+Private Function SelectFileviewFromKey(akey As String) As Boolean
+  'select files that matches a string.
+  'the string is initially long just one character
+  'but stored in the tag variable, and the match is done versus the tag,
+  'so that If a Match Is Found the next key will be appended to the tag
+  'and conseguent match is done versus a longer string.
+  'tag will be resetted to null when nothing matches.
+  Dim found As Boolean = False
+  If akey = "" Then Return False
+  If FileList.count = 0 Then Return False
+  If FileList.tag = "" Then 
+    FileList.tag = akey
+      Else
+    FileList.tag = FileList.tag & akey
+  Endif
+
+  FileList.MoveFirst()
+  Repeat
+    If (File.Dir(FileList.Item.text) Like FileList.tag & "*") Or (File.name(FileList.Item.text) Like FileList.tag & "*") Then 
+      FileList.item.Selected = True
+      found = True
+      Break
+    Endif
+  Until FileList.movebelow()
+  If (Not found) Then 
+    FileList.tag = ""
+    Return False
+      Else
+    Return True
+ Endif
 End
 
 Public Function GetIndex(list As Listview) As Integer
@@ -65,7 +222,7 @@ Public Sub PutIndex(list As Listview, index As Integer)
   list.MoveFirst
   Try list[List.Item.Key].selected = True
   ' SLEEP 0.1
-   For i = 1 To Index - 1
+   For i = 0 To Index - 1
      list.movebelow
    Next
    Try list[List.Item.Key].selected = True
@@ -81,89 +238,36 @@ Public Function Lastdir(path As String) As String
 End
 
 
-Public Sub GetMatch(path As String, pattern As String)
-  Dim myfile As String
-  Dim MatchList As String
-  Dim ExePaths As String[]
-  Dim ExePath As String
-
-  FileList.clear
-
-  If Right(path) <> "/" Then path = path & "/"
-  If IsDir(pattern) Then
-    If Right(pattern) <> "/" Then pattern = pattern & "/"
-  Endif
-  'SHELL "find " & path & pattern & "/* -maxdepth 1" TO MatchList
-  Shell "ls -da " & "\"" & pattern & "\"" & "*" To MatchList
-  For Each myfile In Split(MatchList, "\n", Null, True).Sort()
-    'IF IsDir(path & "/" & myfile) THEN 
-    If IsDir(myfile) Or IsDir(Application.dir & "/" & myfile) Then
-      FileList.Add(myFile & "/", Lastdir(myFile & "/"))
-        Else
-      FileList.Add(myfile, Lastdir(myfile))
-    Endif
-  Next
-
-
-  Exepaths = Split(Application.Env["PATH"], ":", Null, True)
-
-  If Not ((pattern Like "/*") Or (pattern Like "*/") Or (pattern Like "../*") Or (pattern Like "./*") Or (Trim(pattern) = "")) Then
-    'check for name matches in default paths too
-    For Each Exepath In Exepaths
-      Shell "find " & exepath & "/" & pattern & "* -maxdepth 1" To MatchList
-      For Each myfile In Split(Matchlist, "\n", Null, True)
-        Try FileList.Add(myfile, "[$PATH] - " & Lastdir(myfile))
-      Next 'myfile
-    Next 'exepath
-  Endif
-
-  CURRENT_DIR = File.Dir(pattern)
-  
-  If CURRENT_DIR <> "" Then CurrentDirBox.text = CURRENT_DIR & "/"
-  Try FileList[0].selected = True
-  If FileList.count = 0 Then
-    returncancel()
-    Else If FileList.count = 1 Then
-      returnok()
-  Endif
-  Try FileList.MoveFirst()
-  Try FileList.Current.Selected = True
-End
-
 Public Sub GetDir(path As String)
-  Dim files, myfile As String
+  'populate listview with items found under "path"
+  Dim files, dirs, file, dir As String
+  
+  FMain.mouse = Mouse.Wait
+  Wait 
+  'filelist tag was used to keep typed keys needed to select files by typing on the keyboard
+  'as we are learing the list, we need to clear the tag too.
+  FileList.tag = ""
   FileList.clear
+
   If Right(path) <> "/" Then path = path & "/"
-  Shell "find " & "\"" & path & "\"" & " -maxdepth 1" To files
-  For Each MyFile In Split(files, "\n", Null, True).Sort()
-  If IsDir(myfile) Or IsDir(Application.dir & "/" & myfile) Then
-    If myfile <> path Then FileList.Add(myFile & "/", Lastdir(myFile & "/"))
-      Else
-    FileList.Add(myfile, Lastdir(myfile))
-    Endif
+  
+  'get directories first, then files; use find to populate.
+  Shell "find " & "\"" & path & "\"" & " -maxdepth 1 \\! -type d" To files
+  Shell "find " & "\"" & path & "\"" & " -maxdepth 1 -type d" To dirs
+
+  For Each dir In Split(dirs, "\n", Null, True).Sort()
+    If dir <> path Then Try FileList.Add(dir & "/", Lastdir(dir & "/"), Picture["icon:/small/directory"])
   Next
+  
+  For Each file In Split(files, "\n", Null, True).Sort()
+    If file <> path Then Try FileList.Add(file, Lastdir(file), Picture["icon:/small/file"])
+  Next
+
   CURRENT_DIR = Replace(path, "//", "/")
   If (Right(CURRENT_DIR) = "/") And (CURRENT_DIR <> "/") Then CURRENT_DIR = Left(CURRENT_DIR, Len(CURRENT_DIR) - 1)
   CurrentDirBox.text = Replace(CURRENT_DIR, "//", "/")
   Try FileList[0].selected = True
-End
-
-
-Public Sub OldGetDir(path As String, Optional pattern As String = "*")
-  Dim myfile As String
-  FileList.clear
-
-  For Each MyFile In Dir(path).Sort()
-  If IsDir(path & "/" & myfile) Then
-    If myfile Like pattern Then FileList.Add(myFile & "/", Lastdir(myFile & "/"))
-      Else
-    If myfile Like pattern Then FileList.Add(myFile, Lastdir(myfile))
-    Endif
-  Next
-  CURRENT_DIR = Replace(path, "//", "/")
-  If (Right(CURRENT_DIR) = "/") And (CURRENT_DIR <> "/") Then CURRENT_DIR = Left(CURRENT_DIR, Len(CURRENT_DIR) - 1)
-  CurrentDirBox.text = CURRENT_DIR & "/"
-  Try FileList[0].selected = True
+  FMain.mouse = Mouse.normal
 End
 
 
@@ -178,16 +282,24 @@ Public Sub returnok()
   Dim rright As String
   'left part
   rLeft = Left(READLINE_LINE, READLINE_POINT - Len(LASTPART))
-  'middle part
-  ' [GB2:QUOT] Try rmid = Quote.Shell(FileList.current.key)
-  Try rmid = Shell$(FileList.current.key)
-  'IF ERROR THEN rmid = CURRENT_DIR & "/"
+
+  If FileList.count = 0 Then
+    rmid = currentdirbox.text
+      Else If FileList.count = 1 Then
+        rmid = FileList.Item.key
+    Else
+      Try rmid = (FileList.current.key)
+  Endif
+  
+  
   If IsDir(rmid) Then rmid = rmid & "/"
+  
+  If InStr(rmid, " ") > 0 Then Try rmid = Shell$(rmid)
   'right part
   rmid = Replace(rmid, "//", "/")
   Try rright = Mid(READLINE_LINE, READLINE_POINT + 1)
-
   returnstring = Replace(rleft & rmid & rright, "//", "/")
+  'Debug "l", rleft, "m", rmid, "r", rright
   Print returnstring              '$READLINE_LINE
   Print Len(rleft) + Len(rmid)    '$READLINE_POINT
   Me.close
@@ -239,4 +351,27 @@ Public Function ParseLastPath(path As String) As String
   out = Replace(out, Chr(127), "\"") 'replace chr(127) back to double quotes
   Return out
 End
+
+
+Public Sub FileList_Select()
+  textw = FileList.Font.TextWidth(FileList.Current.text)
+  If FileList.w < textw Then 
+    'we want to show the right part of files that doesn't fit in the window.
+    'we need a late timer for that since gambas seems to put the scroll to the left
+    'after a while everytime a new item is selected.
+    timeralign.Trigger
+      Else
+    FileList.scrollx = 0
+  Endif
+
+End
+Public textw As Integer
+
+Public Sub timeralign_Timer()
+  Dim i As String
+  Try i = FileList.Current.Key
+  Wait 0.5
+  If (i = FileList.Current.Key) Then fileList.scrollx = textw - (FileList.clientw) + (Desktop.scale * 4)
+End
+
 

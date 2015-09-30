@@ -7,5 +7,7 @@ kingbash
 gb.image
 gb.qt4
 gb.form
+gb.desktop.x11
+gb.desktop
 gb.qt4.ext
 

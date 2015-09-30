@@ -1,17 +1,24 @@
 # Gambas Form File 3.0
 
-{ Form Form 
-  MoveScaled(0,0,34,43)
+{ Form Form
+  MoveScaled(0,0,52,44)
   Icon = Picture["icon:/16/terminal"]
   Stacking = Window.Above
   SkipTaskbar = True
   Arrangement = Arrange.Vertical
-  { CurrentDirBox TextBox 
-    MoveScaled(1,1,32,4)
+  { CurrentDirBox TextBox
+    MoveScaled(1,1,50,4)
     ReadOnly = True
   }
-  { FileList ListView 
-    MoveScaled(1,5,32,18)
+  { FileList ListView
+    MoveScaled(2,6,38,28)
     Expand = True
+  }
+  { timerlateshow #Timer
+    #MoveScaled(36,7)
+  }
+  { timeralign #Timer
+    #MoveScaled(36,30)
+    Delay = 25
   }
 }
