@@ -34,16 +34,17 @@ Installation:
 # Next, append the following to your ~/.bashrc:
 
 
-	kingbash.gb() {
-	    OUTPUT=$(/usr/bin/kingbash.gambas "$READLINE_LINE" "$READLINE_POINT")
-	    READLINE_POINT=$(echo "$OUTPUT"|tail -n1)
-	    READLINE_LINE=$(echo "$OUTPUT"|head -n1)
-	}
-	
-	if  [ "$DISPLAY"  != "" ]; then
-	        #bind -x '"\C-e": kingbash'     #for Use with Ctrl-e
-	        bind -x '"\t": kingbash'        #for Use with Tab
-	fi
+    kingbash.gb() {
+        OUTPUT=$(/usr/local/bin/kingbash-gb.gambas "$READLINE_LINE" "$READLINE_POINT")
+        READLINE_POINT=$(echo "$OUTPUT"|tail -n1)
+        READLINE_LINE=$(echo "$OUTPUT"|head -n1)
+    }
+
+    if  [ "$DISPLAY"  != "" ]; then
+            #bind -x '"\C-e": kingbash.gb'     #for Use with Ctrl-e
+            bind -x '"\t": kingbash.gb'        #for Use with Tab
+    fi
+
 
 
 
