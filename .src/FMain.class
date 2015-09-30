@@ -105,28 +105,28 @@ Public Function complete(command As String, type As String) As String[]
   last_command = Trim(last_command) 'remove \n
 
   'get completions from compgen:
-  Shell "compgen -A " & type & " " & last_command & " |sort -f " To result
+  Shell "compgen -A " & type & " " & last_command To result
 
   'if no results, try with first uppercase letter
   If Trim(result) = "" Then 
     last_command = String.ucasefirst(Lower(last_command))
-    Shell "compgen -A " & type & " " & last_command & " |sort f " To result
+    Shell "compgen -A " & type & " " & last_command To result
   Endif
   
   'if no results, try with all lowercase
   If Trim(result) = "" Then 
     last_command = Lower(last_command)
-    Shell "compgen -A " & type & " " & last_command & " |sort -f " To result
+    Shell "compgen -A " & type & " " & last_command To result
   Endif
   
   'if no results, try with all uppercase
   If Trim(result) = "" Then 
     last_command = Upper(last_command)
-    Shell "compgen -A " & type & " " & last_command & " |sort -f " To result
+    Shell "compgen -A " & type & " " & last_command To result
   Endif
   
   'return results as an array of strings
-  results = Split(result, "\n", "", True)
+  results = Split(result, "\n", "", True).Sort(gb.natural + gb.IgnoreCase)
   Return results
 End
 
@@ -255,11 +255,11 @@ Public Sub GetDir(path As String)
   Shell "find " & "\"" & path & "\"" & " -maxdepth 1 \\! -type d" To files
   Shell "find " & "\"" & path & "\"" & " -maxdepth 1 -type d" To dirs
 
-  For Each dir In Split(dirs, "\n", Null, True).Sort()
+  For Each dir In Split(dirs, "\n", Null, True).Sort(gb.Language + gb.IgnoreCase)
     If dir <> path Then Try FileList.Add(dir & "/", Lastdir(dir & "/"), Picture["icon:/small/directory"])
   Next
   
-  For Each file In Split(files, "\n", Null, True).Sort()
+  For Each file In Split(files, "\n", Null, True).Sort(gb.Language + gb.IgnoreCase)
     If file <> path Then Try FileList.Add(file, Lastdir(file), Picture["icon:/small/file"])
   Next
 
