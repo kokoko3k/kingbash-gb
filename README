@@ -1,9 +1,10 @@
 kingbash-gb:
-Menu drive auto-completion for bash terminals under X
+Menu driven auto-completion for bash terminals under X
 
 One of the things i really missed from my glorious amigaos system was the kingcon terminal emulator.
 It featured a simple and useful file browser when autocompletion was requested.
 Now i managed to get something similar for bash too.
+
 
 
 Mandatory requirements:
@@ -11,6 +12,7 @@ Mandatory requirements:
   * Gambas 3 (usually the very latest version)
   * Qt4
   * An X terminal running bash
+
 
 
 Compiling it:
@@ -22,6 +24,8 @@ After you installed gambas 3, just checkout and compile xt7 that way:
 # /path/to/gambas/binaries/gbc3 -e -a -g -t -p -m
 # /path/to/gambas/binaries/gba3
 # (This will create ./kingbash-gb.gambas)
+
+
 
 Installation:
 -----------------------------
@@ -40,6 +44,8 @@ Installation:
 	        #bind -x '"\C-e": kingbash'     #for Use with Ctrl-e
 	        bind -x '"\t": kingbash'        #for Use with Tab
 	fi
+
+
 
 
 Check:
