@@ -300,6 +300,11 @@ Public Sub returnok()
   Try rright = Mid(READLINE_LINE, READLINE_POINT + 1)
   returnstring = Replace(rleft & rmid & rright, "//", "/")
   'Debug "l", rleft, "m", rmid, "r", rright
+  'add a white space at the end
+  If Right(returnstring) <> "/" Then 
+    returnstring &= " "
+    rmid &= " "
+  Endif
   Print returnstring              '$READLINE_LINE
   Print Len(rleft) + Len(rmid)    '$READLINE_POINT
   Me.close
