@@ -14,11 +14,14 @@
     MoveScaled(2,6,38,28)
     Expand = True
   }
+  { timerselectfirst #Timer
+    #MoveScaled(35,15)
+  }
   { timerlateshow #Timer
-    #MoveScaled(36,7)
+    #MoveScaled(35,23)
   }
   { timeralign #Timer
-    #MoveScaled(36,30)
+    #MoveScaled(35,30)
     Delay = 25
   }
 }

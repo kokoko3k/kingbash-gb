@@ -2,7 +2,7 @@
 # Compiled with Gambas 3.8.1
 Title=kingbash
 Startup=FMain
-Version=0.1.170
+Version=0.1.171
 Component=gb.image
 Component=gb.qt4
 Component=gb.form

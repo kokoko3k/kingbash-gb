@@ -149,11 +149,13 @@ Public Sub FileList_KeyPress()
         'remember the last selected item(s) position to allow back navigation by pushing it into the index array
         Index.Push(GetIndex(FileList))
         GetDir(currentfile)
+        timerselectfirst.Trigger()
       Endif
     Case Key.left
       Getdir(File.Dir(CURRENT_DIR))
       'select the previously selected item from the index array
       Try PutIndex(FileList, Index.Pop())
+      If filelist.Selection.count = Null Then timerselectfirst.trigger
     Case Key.BackSpace
       'select the previously selected item from the index array
       Getdir(File.Dir(CURRENT_DIR))
@@ -266,7 +268,7 @@ Public Sub GetDir(path As String)
   CURRENT_DIR = Replace(path, "//", "/")
   If (Right(CURRENT_DIR) = "/") And (CURRENT_DIR <> "/") Then CURRENT_DIR = Left(CURRENT_DIR, Len(CURRENT_DIR) - 1)
   CurrentDirBox.text = Replace(CURRENT_DIR, "//", "/")
-  Try FileList[0].selected = True
+
   FMain.mouse = Mouse.normal
 End
 
@@ -380,3 +382,8 @@ Public Sub timeralign_Timer()
 End
 
 
+
+Public Sub timerselectfirst_Timer()
+  Try FileList.MoveFirst()
+  Try FileList.item.Selected = True
+End
