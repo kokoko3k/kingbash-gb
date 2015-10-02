@@ -69,6 +69,8 @@ Public Sub GetMatch(path As String, pattern As String)
   Try addresults(filelist, pattern, "export", Picture["icon:/small/script"])
 
   Try addresults(filelist, pattern, "variable", Picture["icon:/small/script"])
+  
+
 
   CURRENT_DIR = File.Dir(pattern)
 
@@ -105,28 +107,29 @@ Public Function complete(command As String, type As String) As String[]
   last_command = Trim(last_command) 'remove \n
 
   'get completions from compgen:
-  Shell "compgen -A " & type & " " & last_command To result
+  Shell "compgen -o bashdefault -A " & type & " " & last_command To result
 
   'if no results, try with first uppercase letter
   If Trim(result) = "" Then 
     last_command = String.ucasefirst(Lower(last_command))
-    Shell "compgen -A " & type & " " & last_command To result
+    Shell "compgen -o bashdefault -A " & type & " " & last_command To result
   Endif
   
   'if no results, try with all lowercase
   If Trim(result) = "" Then 
     last_command = Lower(last_command)
-    Shell "compgen -A " & type & " " & last_command To result
+    Shell "compgen -o bashdefault -A " & type & " " & last_command To result
   Endif
   
   'if no results, try with all uppercase
   If Trim(result) = "" Then 
     last_command = Upper(last_command)
-    Shell "compgen -A " & type & " " & last_command To result
+    Shell "compgen -o bashdefault -A " & type & " " & last_command To result
   Endif
   
   'return results as an array of strings
   results = Split(result, "\n", "", True).Sort(gb.natural + gb.IgnoreCase)
+
   Return results
 End
 
@@ -284,7 +287,6 @@ Public Sub returnok()
   Dim rright As String
   'left part
   rLeft = Left(READLINE_LINE, READLINE_POINT - Len(LASTPART))
-
   If FileList.count = 0 Then
     rmid = currentdirbox.text
       Else If FileList.count = 1 Then
@@ -318,6 +320,17 @@ Public Sub returncancel()
   Me.close
 End
 
+Public Function is_splitter(s As String) As Boolean
+  Dim splitters As New String[]
+  Dim splitter As String
+  splitters = [" ", "=", "|", "&", ";"]
+  For Each splitter In splitters
+    If s = splitter Then Return True
+  Next
+  Return False
+End
+
+
 Public Function ParseLastPath(path As String) As String
   Dim vmode As Boolean = False 'modalità virgoletta
   Dim bmode As Boolean = False 'modalità backslash
@@ -325,6 +338,8 @@ Public Function ParseLastPath(path As String) As String
   Dim start As Integer = 1
   Dim c As String
   Dim out As String
+
+  
   For i = 1 To Len(path)
       c = Mid(path, i, 1)             'current char
       If c = "\"" Then                'If you find a double quote then
@@ -340,7 +355,7 @@ Public Function ParseLastPath(path As String) As String
       'ELSE'
       
 
-      If ((c = " ") Or (c = "=") Or (c = "|") Or (c = "&") Or (c = ";") Or (c = "&")) Then      'if you find a space (or something similar) then
+      If is_splitter(c) Then      'if you find a space (or something similar) then
         If bmode Then
           bmode = False               ' If you're in bmode, go on and exit bmode
             Else If (Not vmode) Then
@@ -351,7 +366,7 @@ Public Function ParseLastPath(path As String) As String
        If Not (c = "\"" Or c = "\\") Then bmode = False 'as soon as you find a char, go on and exit from bmode
   Next 'i
   out = Mid(path, start)
-  If Left(out, 1) = " " Then out = Mid(out, 2, Len(out) - 1)
+  If is_splitter(Left(out)) Then out = Right(out, -1)
   out = Replace(out, "\\\"", Chr(127)) 'replace \" with chr(127)
   out = Replace(out, "\\", "")  'remove all \
   out = Replace(out, "\"", "")   ' remove all "

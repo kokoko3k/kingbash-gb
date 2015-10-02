@@ -28,6 +28,9 @@ Geometry=[869,35,344,947]
 [DebugWindow/list.Current]
 Geometry=[0,35,344,344]
 
+[DebugWindow/results]
+Geometry=[1280,0,224,280]
+
 [Executable]
 Path="/usr/bin/kingbash-gb.gambas"
 
@@ -41,7 +44,7 @@ SearchString=True
 [OpenFile]
 File[1]=".src/FMain.form"
 Active=2
-File[2]=".src/FMain.class:32.106"
+File[2]=".src/FMain.class:7.327"
 Count=2
 
 [Watches]
