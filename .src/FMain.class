@@ -295,9 +295,12 @@ Public Sub returnok()
       Try rmid = (FileList.current.key)
   Endif
   
-  
-  If IsDir(rmid) Then rmid = rmid & "/"
-  
+  Stop
+  If Left(rmid) = "/" Then 'absolute path:
+    If IsDir(rmid) Then rmid = rmid & "/"
+      Else 'relative path
+    If IsDir(Application.dir & "/" & rmid) Then rmid = rmid & "/"
+  Endif
   If InStr(rmid, " ") > 0 Then Try rmid = Shell$(rmid)
   'right part
   rmid = Replace(rmid, "//", "/")

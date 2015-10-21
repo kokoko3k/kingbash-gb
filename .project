@@ -8,7 +8,7 @@ Component=gb.qt4
 Component=gb.form
 Component=gb.desktop.x11
 Component=gb.desktop
-Arguments="a=/\n3"
+Arguments="ls \n3"
 TabSize=2
 Language=it
 Packager=1
