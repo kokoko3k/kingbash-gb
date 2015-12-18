@@ -8,9 +8,13 @@ Public Index As New Integer[]
 Public LASTPART As String = ""
 
 
+Public ParentWindow As Integer
+
 Public Sub Form_Open()
   Dim result As String
   Dim h, w As Integer
+
+  Parentwindow = Desktop.ActiveWindow
 
   READLINE_LINE = Application.Args[1]               'the current commandline string
   READLINE_POINT = "0" & Application.Args[2]        'the cursor position
@@ -405,3 +409,9 @@ Public Sub timerselectfirst_Timer()
   Try FileList.MoveFirst()
   Try FileList.item.Selected = True
 End
+
+Public Sub Form_Close()
+ Desktop.ActiveWindow = ParentWindow
+ Wait
+End
+
