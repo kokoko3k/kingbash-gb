@@ -2,13 +2,13 @@
 # Compiled with Gambas 3.8.4
 Title=kingbash
 Startup=FMain
-Version=0.1.183
+Version=0.1.184
 Component=gb.image
 Component=gb.qt4
 Component=gb.form
 Component=gb.desktop.x11
 Component=gb.desktop
-Arguments="ls \n3"
+Arguments="ls /sys/\n8"
 TabSize=2
 Language=it
 Packager=1
