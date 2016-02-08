@@ -1,8 +1,8 @@
 # Gambas Project File 3.0
-# Compiled with Gambas 3.8.1
+# Compiled with Gambas 3.8.4
 Title=kingbash
 Startup=FMain
-Version=0.1.181
+Version=0.1.183
 Component=gb.image
 Component=gb.qt4
 Component=gb.form

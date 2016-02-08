@@ -298,8 +298,7 @@ Public Sub returnok()
     Else
       Try rmid = (FileList.current.key)
   Endif
-  
-  Stop
+
   If Left(rmid) = "/" Then 'absolute path:
     If IsDir(rmid) Then rmid = rmid & "/"
       Else 'relative path
@@ -398,9 +397,14 @@ Public textw As Integer
 
 Public Sub timeralign_Timer()
   Dim i As String
+  Dim aTest As Boolean
   Try i = FileList.Current.Key
-  Wait 0.5
-  If (i = FileList.Current.Key) Then fileList.scrollx = textw - (FileList.clientw) + (Desktop.scale * 4)
+  Wait 0.1
+  Try atest = i = FileList.Current.Key
+  If Error Then Return
+  If (atest) Then 
+    fileList.scrollx = textw - (FileList.clientw) + (Desktop.scale * 4)
+  Endif
 End
 
 
