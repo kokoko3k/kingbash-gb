@@ -93,6 +93,7 @@ End
 Public Sub addresults(filelist As Listview, pattern As String, command As String, icon As Picture)
   Dim result As String
   For Each result In complete(pattern, command)
+    If IsDir(Application.dir & "/" & result) And Right(result) <> "/" Then result &= "/"
     Try filelist.Add(result, result, icon)
   Next
 End
@@ -311,6 +312,7 @@ Public Sub returnok()
   returnstring = Replace(rleft & rmid & rright, "//", "/")
   'Debug "l", rleft, "m", rmid, "r", rright
   'add a white space at the end
+
   If Right(returnstring) <> "/" Then 
     returnstring &= " "
     rmid &= " "
