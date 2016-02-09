@@ -1,3 +1,6 @@
+[Bookmarks]
+FMain=[110]
+
 [Breakpoints]
 Count=0
 
@@ -15,6 +18,9 @@ Geometry=[0,35,344,344]
 
 [DebugWindow/ME]
 Geometry=[0,35,344,344]
+
+[DebugWindow/Stat(f, True)]
+Geometry=[47,0,224,280]
 
 [DebugWindow/file]
 Geometry=[0,35,344,344]
@@ -44,7 +50,7 @@ SearchString=True
 [OpenFile]
 File[1]=".src/FMain.form"
 Active=2
-File[2]=".src/FMain.class:0.109"
+File[2]=".src/FMain.class:0.110"
 Count=2
 
 [Watches]

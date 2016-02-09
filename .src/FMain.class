@@ -90,14 +90,24 @@ Public Sub GetMatch(path As String, pattern As String)
 
 End
 
+Public Function isDirFollow(f As String) As Boolean
+
+   Try Return Stat(f, True).type = gb.directory
+   If Error Then Return False
+End
+
+
 Public Sub addresults(filelist As Listview, pattern As String, command As String, icon As Picture)
   Dim result As String
   For Each result In complete(pattern, command)
-    If IsDir(Application.dir & "/" & result) And Right(result) <> "/" Then 
-      result &= "/"
-        Else If Left(result) = "/" And IsDir(result) And Right(result) <> "/" Then 
-          result &= "/"
+
+  If Right(result) <> "/" Then
+    If Left(result) = "/" Then
+      If isDirFollow(result) Then result &= "/"
+        Else 
+      If isDirFollow(Application.dir & "/" & result) Then result &= "/"
     Endif
+  Endif
     Try filelist.Add(result, result, icon)
   Next
 End
@@ -317,7 +327,7 @@ Public Sub returnok()
   'Debug "l", rleft, "m", rmid, "r", rright
   'add a white space at the end
 
-  If Right(returnstring) <> "/" Then 
+  If Right(rmid) <> "/" Then 
     returnstring &= " "
     rmid &= " "
   Endif
