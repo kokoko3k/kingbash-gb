@@ -1,14 +1,15 @@
 # Gambas Project File 3.0
-# Compiled with Gambas 3.8.4
+# Compiled with Gambas 3.9.0
 Title=kingbash
 Startup=FMain
-Version=0.1.188
+Version=0.1.189
 Component=gb.image
-Component=gb.qt4
+Component=gb.qt5
 Component=gb.form
 Component=gb.desktop.x11
 Component=gb.desktop
-Arguments="ls /sys/block/\n14"
+Arguments=[["ls /root/.config/gambas3/wizeq/","31"]]
+CurrentArgument=0
 TabSize=2
 Language=it
 Packager=1
